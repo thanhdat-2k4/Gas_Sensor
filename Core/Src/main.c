@@ -431,7 +431,7 @@ int main(void) {
             	    last_ppm_for_freq = 0;
             	}
             	LED_Set(tim2_blink_state, 0, 0, 0);
-            	Buzzer_Set(tim2_blink_state);
+            	Buzzer_Set(1);
             	break;
             case 3:
             	if (last_alert_state != 3 || fabs(ppm - last_ppm_for_freq) > 50) {
@@ -443,7 +443,7 @@ int main(void) {
             	    last_ppm_for_freq = ppm;
             	}
             	LED_Set(tim2_blink_state, 0, 0, 0);
-            	Buzzer_Set(tim2_blink_state);
+            	Buzzer_Set(1);
             	break;
         }
 
