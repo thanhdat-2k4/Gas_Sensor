@@ -25,6 +25,7 @@ uint8_t system_state = 1;
 uint8_t alert_state = 0;
 volatile uint32_t tick_count = 0;
 volatile uint8_t tim2_blink_state = 0;
+volatile uint8_t relay_blink_state = 0;
 
 void SystemClock_Config(void);
 void UART_Transmit(const char *data);
@@ -222,12 +223,14 @@ void TIM2_Config(void) {
 }
 
 void TIM2_IRQHandler(void) {
-    if (TIM2->SR & TIM_SR_UIF) {
-        TIM2->SR &= ~TIM_SR_UIF;
-        if (TIM2->CR1 & TIM_CR1_CEN) {
-            tim2_blink_state = !tim2_blink_state;
-        }
-    }
+	if (TIM2->SR & TIM_SR_UIF) {
+	        TIM2->SR &= ~TIM_SR_UIF;
+	        if (TIM2->CR1 & TIM_CR1_CEN) {
+	            tim2_blink_state = !tim2_blink_state;
+	            relay_blink_state = tim2_blink_state; // Đồng bộ trạng thái relay
+	            Relay_Set(relay_blink_state); // Bật/tắt relay
+	        }
+	}
 }
 
 float MQ2_GetPPM(uint16_t adc_value) {
@@ -421,27 +424,27 @@ int main(void) {
                 last_ppm_for_freq = 0;
                 break;
             case 2:
-                if (last_alert_state != 2) {
-                    tim2_blink_state = 0;
-                    TIM2_Reconfig(4999); // 1 Hz
-                    last_ppm_for_freq = 0;
-                }
-                LED_Set(tim2_blink_state, 0, 0, 0);
-                Relay_Set(1);
-                Buzzer_Set(1);
-                break;
+            	if (last_alert_state != 2) {
+            	    tim2_blink_state = 0;
+            	    relay_blink_state = 0;
+            	    TIM2_Reconfig(4999); // 1 Hz
+            	    last_ppm_for_freq = 0;
+            	}
+            	LED_Set(tim2_blink_state, 0, 0, 0);
+            	Buzzer_Set(tim2_blink_state);
+            	break;
             case 3:
-                if (last_alert_state != 3 || fabs(ppm - last_ppm_for_freq) > 50) {
-                    tim2_blink_state = 0;
-                    float freq = (ppm >= 2000 ? 10.0f : 2.0f + (ppm - 800.0f) * 8.0f / 1200.0f);
-                    uint32_t arr = (uint32_t)((42000000.0f / (2.0f * freq * 4200.0f)) - 1);
-                    TIM2_Reconfig(arr);
-                    last_ppm_for_freq = ppm;
-                }
-                LED_Set(tim2_blink_state, 0, 0, 0);
-                Relay_Set(1);
-                Buzzer_Set(1);
-                break;
+            	if (last_alert_state != 3 || fabs(ppm - last_ppm_for_freq) > 50) {
+            	    tim2_blink_state = 0;
+            	    relay_blink_state = 0;
+            	    float freq = (ppm >= 2000 ? 10.0f : 2.0f + (ppm - 800.0f) * 8.0f / 1200.0f);
+            	    uint32_t arr = (uint32_t)((42000000.0f / (2.0f * freq * 4200.0f)) - 1);
+            	    TIM2_Reconfig(arr);
+            	    last_ppm_for_freq = ppm;
+            	}
+            	LED_Set(tim2_blink_state, 0, 0, 0);
+            	Buzzer_Set(tim2_blink_state);
+            	break;
         }
 
         delay_ms(50);
