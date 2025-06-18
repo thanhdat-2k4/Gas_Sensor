@@ -17,6 +17,9 @@
 #define LCD_I2C_ADDR    0x27
 #define LED_CATHODE_COMMON 1
 #define BUZZER_ACTIVE_HIGH 1
+#define UART1_TX_PIN    9
+#define UART1_RX_PIN    10
+#define UART1_BAUDRATE  9600
 
 uint8_t system_state = 1;
 uint8_t alert_state = 0;
@@ -157,20 +160,26 @@ uint16_t ADC_Read(void) {
 }
 
 void UART_Config(void) {
-    RCC->APB1ENR |= RCC_APB1ENR_USART2EN;
     RCC->AHB1ENR |= RCC_AHB1ENR_GPIOAEN;
-    GPIOA->MODER &= ~((3 << (2 * 2)) | (3 << (3 * 2)));
-    GPIOA->MODER |= ((2 << (2 * 2)) | (2 << (3 * 2)));
-    GPIOA->AFR[0] |= ((7 << (2 * 4)) | (7 << (3 * 4)));
-    USART2->BRR = (uint32_t)(16000000.0f / 9600.0f + 0.5f); // HSI = 16 MHz
-    USART2->CR1 |= USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
+    RCC->APB2ENR |= RCC_APB2ENR_USART1EN;
+    // Cấu hình PA9 (TX) và PA10 (RX)
+    GPIOA->MODER &= ~((3U << (UART1_TX_PIN * 2)) | (3U << (UART1_RX_PIN * 2)));
+    GPIOA->MODER |= ((2U << (UART1_TX_PIN * 2)) | (2U << (UART1_RX_PIN * 2)));
+    GPIOA->OTYPER &= ~((1U << UART1_TX_PIN) | (1U << UART1_RX_PIN));
+    GPIOA->OSPEEDR |= ((3U << (UART1_TX_PIN * 2)) | (3U << (UART1_RX_PIN * 2)));
+    GPIOA->AFR[1] |= ((7U << ((UART1_TX_PIN - 8) * 4)) | (7U << ((UART1_RX_PIN - 8) * 4)));
+    // Cấu hình USART1
+    USART1->CR1 = 0;
+    USART1->BRR = SystemCoreClock / UART1_BAUDRATE; // SystemCoreClock = 84MHz
+    USART1->CR1 |= USART_CR1_TE | USART_CR1_RE | USART_CR1_UE;
 }
 
 void UART_Transmit(const char *data) {
     while (*data && *data != '\0') {
-        while (!(USART2->SR & USART_SR_TXE));
-        USART2->DR = *data++;
+        while (!(USART1->SR & USART_SR_TXE));
+        USART1->DR = *data++;
     }
+    while (!(USART1->SR & USART_SR_TC)); // Đợi truyền xong
 }
 
 void LED_Set(uint8_t r, uint8_t y, uint8_t b, uint8_t g) {
@@ -296,6 +305,7 @@ int main(void) {
             system_state = !system_state;
             snprintf(debug_buf, sizeof(debug_buf), "SW1 Pressed: System State=%u\r\n", system_state);
             UART_Transmit(debug_buf);
+            delay_ms(10);
         }
         last_sw1 = sw1;
 
@@ -339,6 +349,7 @@ int main(void) {
                 LCD_SendCommand(0xC0);
                 LCD_SendString("PPM:--- Alert:0");
                 UART_Transmit("System: OFF, PPM: ---\r\n");
+                delay_ms(10);
                 last_system_state = system_state;
                 last_alert_state = 255;
                 last_ppm = 0xFFFFFFFF;
@@ -366,10 +377,10 @@ int main(void) {
         float ppm = MQ2_GetPPM(adc_val);
         uint32_t ppm_int = (uint32_t)ppm;
 
-        if (tick_count - last_transmit >= 1000) {
-            snprintf(debug_buf, sizeof(debug_buf), "PPM: %.0f\r\n",
-                      ppm);
+        if (tick_count - last_transmit >= 250) {
+            snprintf(debug_buf, sizeof(debug_buf), "%.1f\n", ppm);
             UART_Transmit(debug_buf);
+            delay_ms(10);
             last_transmit = tick_count;
         }
 

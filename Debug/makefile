@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (13.3.rel1)
+# Toolchain: GNU Tools for STM32 (12.3.rel1)
 ################################################################################
 
 -include ../makefile.init
@@ -60,8 +60,8 @@ all: main-build
 main-build: CAM_BIEN_KHI_GAS.elf secondary-outputs
 
 # Tool invocations
-CAM_BIEN_KHI_GAS.elf CAM_BIEN_KHI_GAS.map: $(OBJS) $(USER_OBJS) E:\Gas_Sensor\Gas_Sensor\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
-	arm-none-eabi-gcc -o "CAM_BIEN_KHI_GAS.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"E:\Gas_Sensor\Gas_Sensor\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="CAM_BIEN_KHI_GAS.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+CAM_BIEN_KHI_GAS.elf CAM_BIEN_KHI_GAS.map: $(OBJS) $(USER_OBJS) C:\Users\Nguyen\ Thanh\ Dat\STM32CubeIDE\workspace_1.17.0\CAM_BIEN_KHI_GAS\STM32F401RETX_FLASH.ld makefile objects.list $(OPTIONAL_TOOL_DEPS)
+	arm-none-eabi-gcc -o "CAM_BIEN_KHI_GAS.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"C:\Users\Nguyen Thanh Dat\STM32CubeIDE\workspace_1.17.0\CAM_BIEN_KHI_GAS\STM32F401RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="CAM_BIEN_KHI_GAS.map" -Wl,--gc-sections -static -u _printf_float --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
