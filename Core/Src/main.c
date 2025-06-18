@@ -162,7 +162,7 @@ void UART_Config(void) {
     GPIOA->MODER &= ~((3 << (2 * 2)) | (3 << (3 * 2)));
     GPIOA->MODER |= ((2 << (2 * 2)) | (2 << (3 * 2)));
     GPIOA->AFR[0] |= ((7 << (2 * 4)) | (7 << (3 * 4)));
-    USART2->BRR = 42000000 / 115200;
+    USART2->BRR = (uint32_t)(16000000.0f / 9600.0f + 0.5f); // HSI = 16 MHz
     USART2->CR1 |= USART_CR1_UE | USART_CR1_TE | USART_CR1_RE;
 }
 
@@ -367,8 +367,8 @@ int main(void) {
         uint32_t ppm_int = (uint32_t)ppm;
 
         if (tick_count - last_transmit >= 1000) {
-            snprintf(debug_buf, sizeof(debug_buf), "ADC: %u, V: %.2f, PPM: %.0f, Alert: %d, Blink=%u, ARR=%lu\r\n",
-                     adc_val, (adc_val / 4096.0f) * 3.3f, ppm, alert_state, tim2_blink_state, last_arr);
+            snprintf(debug_buf, sizeof(debug_buf), "PPM: %.0f\r\n",
+                      ppm);
             UART_Transmit(debug_buf);
             last_transmit = tick_count;
         }
